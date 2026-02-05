@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#10b981">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <title>Smart DKM - Manajemen Masjid Terpadu</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script type="text/javascript"
+  src="https://app.midtrans.com/snap/snap.js"
+  data-client-key="Mid-client-lTEt5G_rNZeNc9HI"> </script>
+
+    <style>
+        /* --- 1. CORE VARIABLES & RESET --- */
+        :root {
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #cbd5e1;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --radius: 12px;
+
+            --header-h: 65px;
+            --ticker-h: 32px;
+            --total-top: calc(var(--header-h) + var(--ticker-h));
+            --marquee-speed: 25s;
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f172a;
+            --bg-card: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --shadow-sm: none;
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * { box-sizing: border-box; outline: none; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            transition: background 0.3s, color 0.3s;
+            font-size: 14px;
+            line-height: 1.5;
+            padding-top: var(--total-top);
+            /* Anti Selection */
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            overscroll-behavior-y: contain;
+        }
+
+        input, textarea, select {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* --- 2. LAYOUT UTILITIES --- */
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        @media (min-width: 768px) {
+            .container { padding: 30px; max-width: 96%; }
+        }
+
+        .card { background: var(--bg-card); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow-md); margin-bottom: 20px; border: 1px solid var(--border); }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .flex-gap { display: flex; gap: 10px; align-items: center; }
+        .hidden { display: none !important; }
+
+        .grid-responsive { display: grid; gap: 15px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+        .grid-2 { display: grid; gap: 15px; grid-template-columns: 1fr; }
+
+        @media(min-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr 1fr; }
+        }
+
+        /* --- 3. COMPONENTS --- */
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 16px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 0.9rem; }
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-info { background: var(--info); color: white; }
+        .btn-info:hover { background: #2563eb; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-outline:hover { border-color: var(--primary); color: var(--primary); background: rgba(16, 185, 129, 0.05); }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 500; color: var(--text-muted); font-size: 0.85rem; }
+        input, select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-body); color: var(--text-main); font-family: inherit; transition: 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1); }
+
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; padding: 0; border: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -8px; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; cursor: pointer; background: var(--border); border-radius: 2px; }
+
+        /* --- NAVBAR UTAMA --- */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h);
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            padding: 0 15px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: var(--shadow-sm);
+        }
+        .brand-text h1 { margin: 0; font-size: 1.1rem; color: var(--primary); font-weight: 700; }
+        .brand-text p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+        .clock-badge { background: var(--bg-body); padding: 5px 10px; border-radius: 6px; font-family: monospace; font-weight: 700; border: 1px solid var(--border); font-size: 0.9rem; color: var(--primary); }
+
+        /* --- TICKER BAR --- */
+        .ticker-bar {
+            position: fixed;
+            top: var(--header-h);
+            left: 0; right: 0;
+            height: var(--ticker-h);
+            background: #064e3b;
+            color: #ecfdf5;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .marquee-content {
+            display: inline-block;
+            padding-left: 100%;
+            animation: marquee var(--marquee-speed) linear infinite;
+            font-size: 0.85rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        .ticker-bar:hover .marquee-content { animation-play-state: paused; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+
+        /* Status Online */
+        .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: flex; align-items: center; gap: 5px; margin-right: 5px; cursor: help; }
+        .status-online { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-offline { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* Sidebar & Menu */
+        .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1001; opacity: 0; visibility: hidden; transition: 0.3s; backdrop-filter: blur(2px); }
+        .sidebar-overlay.active { opacity: 1; visibility: visible; }
+        .sidebar { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--bg-card); z-index: 1002; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -5px 0 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .sidebar.active { right: 0; }
+        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .nav-link { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-main); text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-weight: 500; transition: 0.2s; }
+        .nav-link:hover, .nav-link.active { background: rgba(16, 185, 129, 0.1); color: var(--primary); }
+        .nav-link i { width: 20px; text-align: center; }
+
+        /* --- TABLE STYLING --- */
+        .table-responsive { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+        table { width: 100%; border-collapse: collapse; min-width: 900px; border: 1px solid var(--border); }
+        th, td { border: 1px solid var(--border); padding: 12px 16px; vertical-align: top; }
+        th { background: var(--bg-body); text-align: left; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; border-bottom: 2px solid var(--border); }
+        tbody tr:nth-child(even) { background-color: rgba(0, 0, 0, 0.02); }
+        tbody tr:hover td { background: rgba(16, 185, 129, 0.05); }
+
+        /* Badges & Lists */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; display: inline-block; white-space: nowrap; }
+        .bg-green-soft { background: #d1fae5; color: #065f46; border: 1px solid #34d399; }
+        .bg-blue-soft { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .bg-purple-soft { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+        .bg-amber-soft { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .bg-gray-soft { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+        .detail-list { font-size: 0.85rem; }
+        .detail-row { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding: 3px 0; gap: 10px; }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-lbl { font-weight: 600; color: var(--text-muted); min-width: 60px; }
+
+        /* Widget Prayer */
+        .widget-prayer { background: var(--bg-body); border-radius: 8px; padding: 15px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .wp-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dashed var(--border); font-size: 0.9rem; }
+        .wp-item:last-child { border-bottom: none; }
+        .wp-active { color: var(--primary); font-weight: 700; }
+
+        /* Finance Cards */
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: var(--bg-card); padding: 20px; border-radius: var(--radius); border: 1px solid var(--border); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; align-items: center; text-align: center; }
+        .stat-val { font-size: 1.5rem; font-weight: 700; margin: 5px 0; letter-spacing: -0.5px; }
+
+        /* Animation */
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Locked Placeholder */
+        .locked-box { text-align: center; padding: 40px 20px; border: 2px dashed var(--border); border-radius: var(--radius); color: var(--text-muted); background: var(--bg-body); }
+        .locked-icon { font-size: 2.5rem; margin-bottom: 15px; color: var(--text-muted); opacity: 0.5; }
+
+        /* Helper for Admin areas */
+        .admin-only { display: none; }
+        .admin-border { border-left: 4px solid var(--primary); }
+
+        /* Sync Box */
+        .sync-box { background: rgba(16, 185, 129, 0.05); color: var(--text-main); padding: 20px; border-radius: var(--radius); text-align: center; margin-bottom: 20px; border: 2px dashed var(--primary); }
+        .sync-box h3 { margin: 0 0 10px 0; font-size: 1.1rem; color: var(--primary); }
+        .sync-box input { text-align: center; font-size: 1.2rem; letter-spacing: 2px; font-weight: bold; width: 200px; margin: 10px auto; display: block; text-transform: uppercase; }
+        .id-display { font-family: monospace; font-size: 2rem; color: var(--primary); letter-spacing: 2px; font-weight: bold; margin: 10px 0; border: 1px solid var(--border); padding: 10px; display: inline-block; border-radius: 8px; background: white; }
+
+        /* Version Badge */
+        .version-badge { background: var(--bg-body); border: 1px solid var(--border); padding: 5px 15px; border-radius: 20px; font-weight: 700; color: var(--primary); display: inline-block; margin-bottom: 15px; font-size: 0.85rem; }
+        .pass-info { font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 5px; }
+
+        /* Warning Box in Settings */
+        .warning-box {
+            background: #fff7ed; border: 1px solid #fdba74; color: #c2410c;
+            padding: 12px; border-radius: 8px; margin-bottom: 20px;
+            font-size: 0.9rem; display: flex; align-items: center; gap: 10px;
+        }
+
+        /* TAB STYLE */
+        .tab-group { display: flex; gap: 5px; background: var(--bg-card); padding: 5px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px; overflow-x: auto; }
+        .tab-btn { flex: 1; white-space: nowrap; }
+
+        /* --- MODE TV (DIGITAL SIGNAGE) --- */
+        body.tv-mode {
+            padding-top: 0;
+            background-color: #0f172a;
+            color: #fff;
+            overflow: hidden;
+        }
+        body.tv-mode .navbar,
+        body.tv-mode .sidebar,
+        body.tv-mode .sidebar-overlay,
+        body.tv-mode .tab-group,
+        body.tv-mode .admin-only,
+        body.tv-mode .locked-box,
+        body.tv-mode #themeBtn,
+        body.tv-mode .btn-outline {
+            display: none !important;
+        }
+        body.tv-mode .container {
+            max-width: 100vw;
+            height: 100vh;
+            padding: 20px;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            align-content: center;
+        }
+        body.tv-mode .card {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid #334155;
+            color: #fff;
+            box-shadow: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 65vh; /* Tinggi area tabel */
+        }
+        
+        /* Auto Scroll Container */
+        body.tv-mode .table-responsive {
+            overflow-y: hidden; /* Hide scrollbar but allow JS scroll */
+            flex: 1;
+        }
+        
+        body.tv-mode table {
+            font-size: 1.2rem;
+        }
+        body.tv-mode th {
+            background: #f59e0b; /* Warna Header Kontras */
+            color: #000;
+            font-size: 1.1rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        body.tv-mode td {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        body.tv-mode .widget-prayer {
+            display: flex;
+            justify-content: space-around;
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        body.tv-mode .wp-item {
+            display: block;
+            text-align: center;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 15px 25px;
+            min-width: 150px;
+            background: #1e293b;
+        }
+        body.tv-mode .wp-item span:first-child {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            color: #94a3b8;
+        }
+        body.tv-mode .wp-item span:last-child {
+            font-size: 2.2rem;
+            font-weight: bold;
+        }
+        body.tv-mode .wp-active {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+        body.tv-mode .wp-active span:first-child { color: #d1fae5; }
+        body.tv-mode .ticker-bar {
+            position: fixed;
+            bottom: 0;
+            top: auto;
+            height: 60px;
+            font-size: 1.5rem;
+            background: #064e3b;
+        }
+        body.tv-mode h2 { font-size: 2.5rem; text-align: center; margin-bottom: 10px; color: var(--primary); }
+        body.tv-mode #locationText { font-size: 1.2rem !important; margin-bottom: 20px; }
+        body.tv-mode #tvExitBtn {
+            position: fixed; top: 10px; right: 10px; z-index: 9999;
+            opacity: 0.3; transition: 0.3s;
+        }
+        body.tv-mode #tvExitBtn:hover { opacity: 1; }
+
+        /* Responsive Fixes */
+        @media (max-width: 640px) {
+            .hide-mobile { display: none; }
+            .btn span { display: none; }
+            .brand-text h1 { font-size: 0.95rem; }
+            .brand-text p { display: none; }
+        }
+    </style>
+</head>
+<body oncontextmenu="return false" onselectstart="return false" ondragstart="return false">
+
+<button id="tvExitBtn" class="btn btn-sm btn-danger hidden" onclick="toggleTVMode(false)">Keluar TV Mode</button>
+
+<nav class="navbar">
+    <div class="flex-gap">
+        <div class="brand-text">
+            <h1 id="displayMosqueName">Smart DKM</h1>
+            <p id="displayMosqueAddress" class="hide-mobile">Memuat lokasi...</p>
+        </div>
+    </div>
+
+    <button class="btn btn-outline btn-sm" onclick="toggleMenu()" aria-label="Menu">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
+</nav>
+
+<div class="ticker-bar">
+    <div class="marquee-content" id="displayRunningText">
+        Selamat Datang di Aplikasi Smart DKM. Mohon Nonaktifkan HP Saat Sholat. Jagalah Kebersihan dan Keindahan Masjid Kita.
+    </div>
+</div>
+
+<div class="sidebar-overlay" onclick="toggleMenu()"></div>
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <h3 style="margin:0; color:var(--primary);">Menu</h3>
+        <button class="btn btn-outline btn-sm" onclick="toggleMenu()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="sidebar-content">
+        <div class="widget-prayer">
+            <div class="flex-between" style="margin-bottom:10px;">
+                <strong style="color:var(--primary); font-size:0.85rem;"><i class="fas fa-mosque"></i> Jadwal Sholat</strong>
+                <i class="fas fa-sync-alt" style="cursor:pointer; font-size:0.8rem; color:var(--text-muted);" onclick="refreshLocation()" title="Ganti Lokasi"></i>
+            </div>
+            <div id="prayerList" style="text-align:center; font-size:0.8rem;">Loading...</div>
+            <div id="locationText" style="font-size:0.75rem; text-align:center; margin-top:10px; color:var(--text-muted); font-style:italic;">Detecting...</div>
+        </div>
+
+        <div id="iqomahCountdown" style="display:none; text-align:center; background:#fee2e2; color:#991b1b; padding:10px; border-radius:8px; margin-bottom:20px; font-weight:bold; border:1px solid #fca5a5;">
+            <span id="iqomahTitle" style="font-size:0.8rem;">MENUJU IQOMAH</span><br>
+            <span id="iqomahTimer" style="font-size:1.5rem;">00:00</span>
+        </div>
+
+        <nav>
+            <a href="#" class="nav-link active" onclick="navigate('home')"><i class="fas fa-calendar-alt"></i> Jadwal</a>
+            <a href="#" class="nav-link" onclick="navigate('finance')"><i class="fas fa-wallet"></i> Keuangan</a>
+            <a href="#" class="nav-link" onclick="navigate('settings')"><i class="fas fa-cog"></i> Pengaturan & Sync</a>
+            <a href="#" class="nav-link" onclick="navigate('about')"><i class="fas fa-info-circle"></i> Tentang</a>
+        </nav>
+        <div style="margin-top: 30px; border-top: 1px solid var(--border); padding-top: 20px;">
+            <button id="authBtn" class="btn btn-primary" style="width:100%; justify-content:center;" onclick="toggleAuth()">
+                <i class="fas fa-lock"></i> <span>Login Admin</span>
+            </button>
+            <div id="defaultPassInfo" class="pass-info">
+                <i class="fas fa-key"></i> Default: <strong>admin123</strong>
+            </div>
+        </div>
+    </div>
+    <div style="padding: 15px; text-align: center; font-size: 0.7rem; color: var(--text-muted); border-top: 1px solid var(--border);">
+        Smart DKM <span id="sidebarVersion">...</span>
+    </div>
+</div>
+
+<div class="container">
+
+    <section id="page-home" class="fade-in">
+        <h2 style="margin-bottom: 20px;">Jadwal</h2>
+
+        <div class="tab-group">
+            <button class="btn btn-sm btn-primary tab-btn" id="tabHarian" onclick="switchScheduleTab('harian')">Harian</button>
+            <button class="btn btn-sm btn-outline tab-btn" id="tabRamadhan" onclick="switchScheduleTab('ramadhan')">Ramadhan (Tarawih)</button>
+            <button class="btn btn-sm btn-outline tab-btn" id="tabIdulFitri" onclick="switchScheduleTab('idul_fitri')">Idul Fitri</button>
+            <button class="btn btn-sm btn-outline tab-btn" id="tabIdulAdha" onclick="switchScheduleTab('idul_adha')">Idul Adha</button>
+        </div>
+
+        <div id="adminPanel" class="card admin-border admin-only">
+            <h4 style="margin-top:0; color:var(--primary); display:flex; align-items:center; gap:8px;">
+                <i class="fas fa-edit"></i> Input Jadwal Baru
+            </h4>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="mDate" onchange="checkFriday()">
+                </div>
+            </div>
+
+            <div id="inputHarian" class="input-section">
+                <label>Imam Rawatib (Subuh - Isya)</label>
+                <div class="grid-responsive" style="margin-bottom:15px;">
+                    <input type="text" id="mSubuh" placeholder="Subuh">
+                    <input type="text" id="mDzuhur" placeholder="Dzuhur">
+                    <input type="text" id="mAshar" placeholder="Ashar">
+                    <input type="text" id="mMaghrib" placeholder="Maghrib">
+                    <input type="text" id="mIsya" placeholder="Isya">
+                </div>
+                <div id="fridayFields" style="display:none; background: #eff6ff; padding:15px; border-radius:8px; border:1px solid #bfdbfe; margin-bottom:15px;">
+                    <strong style="color:#1d4ed8; display:block; margin-bottom:10px;"><i class="fas fa-kaaba"></i> Khusus Jumat</strong>
+                    <div class="grid-2">
+                        <input type="text" id="mKhatib" placeholder="Nama Khatib">
+                        <input type="text" id="mImamJumat" placeholder="Nama Imam Jumat">
+                        <input type="text" id="mMuazin" placeholder="Muazin">
+                    </div>
+                </div>
+            </div>
+
+            <div id="inputRamadhan" class="input-section hidden">
+                <div style="background: #f0f9ff; padding:15px; border-radius:8px; border:1px solid #bae6fd;">
+                    <strong style="color:#0369a1; display:block; margin-bottom:10px;">🌙 Petugas Tarawih</strong>
+                    
+                    <div class="form-group">
+                        <label>Malam Ke- (Angka)</label>
+                        <input type="number" id="mRamadhanNight" placeholder="Contoh: 1">
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Penceramah / Kultum</label>
+                            <input type="text" id="mPenceramah" placeholder="Nama Ustadz">
+                        </div>
+                        <div class="form-group">
+                            <label>Imam Tarawih</label>
+                            <input type="text" id="mImamTarawih" placeholder="Nama Imam">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bilal Tarawih</label>
+                        <input type="text" id="mBilalTarawih" placeholder="Nama Bilal">
+                    </div>
+                </div>
+            </div>
+
+            <div id="inputFitri" class="input-section hidden">
+                <div style="background: #f0fdf4; padding:15px; border-radius:8px; border:1px solid #bbf7d0;">
+                    <strong style="color:#15803d; display:block; margin-bottom:10px;">🕌 Idul Fitri (1 Syawal)</strong>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Khatib Ied</label>
+                            <input type="text" id="mKhatibFitri" placeholder="Nama Khatib">
+                        </div>
+                        <div class="form-group">
+                            <label>Imam Ied</label>
+                            <input type="text" id="mImamFitri" placeholder="Nama Imam">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bilal Ied</label>
+                        <input type="text" id="mBilalFitri" placeholder="Nama Bilal">
+                    </div>
+                </div>
+            </div>
+
+            <div id="inputAdha" class="input-section hidden">
+                <div style="background: #fff7ed; padding:15px; border-radius:8px; border:1px solid #fed7aa;">
+                    <strong style="color:#c2410c; display:block; margin-bottom:10px;">🐐 Idul Adha</strong>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>Khatib Ied</label>
+                            <input type="text" id="mKhatibAdha" placeholder="Nama Khatib">
+                        </div>
+                        <div class="form-group">
+                            <label>Imam Ied</label>
+                            <input type="text" id="mImamAdha" placeholder="Nama Imam">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Bilal Ied</label>
+                        <input type="text" id="mBilalAdha" placeholder="Nama Bilal">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" style="width:100%" onclick="addManual()">
+                <i class="fas fa-cloud-upload-alt"></i> Simpan (Auto Update User)
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive" id="scheduleContainer">
+                <table id="scheduleTable">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div id="emptyMsg" style="text-align:center; padding:30px; display:none; color:var(--text-muted);">
+                <i class="far fa-folder-open" style="font-size:2rem; margin-bottom:10px;"></i><br>Belum ada data jadwal.
+            </div>
+        </div>
+    </section>
+
+    <section id="page-finance" class="fade-in hidden">
+        <h2 style="margin-bottom:20px;">Laporan Kas Masjid</h2>
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div style="color:var(--primary); font-size:0.9rem;">Saldo Awal</div>
+                <div class="stat-val" style="color:var(--primary);" id="totalInitial">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <div style="color:var(--primary); font-size:0.9rem;">Pemasukan</div>
+                <div class="stat-val" style="color:var(--primary);" id="totalIn">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <div style="color:var(--danger); font-size:0.9rem;">Pengeluaran</div>
+                <div class="stat-val" style="color:var(--danger);" id="totalOut">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <div style="color:var(--info); font-size:0.9rem;">Saldo Akhir</div>
+                <div class="stat-val" style="color:var(--info);" id="balance">Rp 0</div>
+            </div>
+        </div>
+        <div id="financeInput" class="card admin-border admin-only">
+            <h4 style="margin-top:0;"><i class="fas fa-plus-circle"></i> Catat Transaksi</h4>
+            <div class="grid-responsive" style="align-items:end;">
+                <div class="form-group" style="margin:0;">
+                    <input type="date" id="finDate">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <select id="finType">
+                        <option value="masuk">🟢 Pemasukan</option>
+                        <option value="keluar">🔴 Pengeluaran</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <input type="number" id="finAmount" placeholder="Jumlah (Rp)">
+                </div>
+                <div class="form-group" style="margin:0;">
+                    <input type="text" id="finDesc" placeholder="Keterangan Transaksi">
+                </div>
+                <button class="btn btn-primary" onclick="addFinance()"><i class="fas fa-check"></i></button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="flex-between" style="margin-bottom:15px;">
+                <h4 style="margin:0;">Riwayat Transaksi</h4>
+                <div style="display:flex; gap:5px;">
+                    <button class="btn btn-primary btn-sm" onclick="downloadCSV()"><i class="fas fa-file-excel"></i> Excel</button>
+                    <button class="btn btn-outline btn-sm" onclick="window.print()"><i class="fas fa-print"></i> Cetak</button>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                    <tr>
+                        <th width="15%">Tanggal</th>
+                        <th>Keterangan</th>
+                        <th width="15%">Status</th>
+                        <th width="20%">Jumlah</th>
+                        <th width="10%" class="col-action admin-only">Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody id="financeBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section id="page-settings" class="fade-in hidden">
+        <h2 style="margin-bottom:20px;">Pengaturan & Sinkronisasi</h2>
+
+        <div class="card" style="background: var(--primary); color: white; border: none; padding: 15px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <div id="connStatus" class="status-pill" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); color: white; margin: 0; padding: 6px 12px;">
+                        <i class="fas fa-database"></i> Lokal
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.1); padding: 6px 12px; border-radius: 8px;">
+                        <i class="far fa-calendar-alt"></i>
+                        <span id="headerDate" style="font-weight: 500; font-size: 0.9rem;">...</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; background: white; color: var(--primary); padding: 6px 12px; border-radius: 8px; font-family: monospace; font-weight: bold; font-size: 1rem; min-width: 90px; justify-content: center;">
+                        <i class="far fa-clock"></i>
+                        <span id="headerTime">00:00:00</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="navNotifBtn" class="btn btn-sm" onclick="reqNotification()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);" title="Izin Notifikasi">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="btn btn-sm" onclick="location.reload()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.4);">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="flex-between" style="align-items: flex-start; flex-direction: column; gap: 15px;">
+                <div>
+                    <div style="font-weight:600;">Mode TV (Layar Penuh)</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Pilih jenis jadwal untuk ditampilkan di layar</div>
+                </div>
+                <div style="display: flex; gap: 10px; width: 100%;">
+                    <select id="tvModeSelect" style="flex:1;">
+                        <option value="harian">Jadwal Harian</option>
+                        <option value="ramadhan">Jadwal Ramadhan / Tarawih</option>
+                        <option value="idul_fitri">Idul Fitri</option>
+                        <option value="idul_adha">Idul Adha</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="toggleTVMode(true)">
+                        <i class="fas fa-tv"></i> Mulai
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-top: 20px;">
+            <div class="flex-between">
+                <div>
+                    <div style="font-weight:600;">Mode Gelap</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Ubah tampilan aplikasi</div>
+                </div>
+                <button class="btn btn-outline btn-sm" onclick="toggleTheme()" id="themeBtn">
+                    <i class="fas fa-moon"></i> Switch
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="flex-between">
+                <div>
+                    <div style="font-weight:600;">Notifikasi Adzan & Jadwal</div>
+                    <div style="font-size:0.85rem; color:var(--text-muted);">Aktifkan pengingat otomatis</div>
+                </div>
+                <button class="btn btn-outline btn-sm" id="btnNotif" onclick="reqNotification()">
+                    <i class="fas fa-bell-slash"></i> Aktifkan
+                </button>
+            </div>
+        </div>
+
+        <div class="card" id="cloudFeatureContainer">
+            <h3 style="margin-top:0; color:var(--info); font-size: 1.1rem;">
+                <i class="fas fa-cloud"></i> Cloud Sync (Online)
+            </h3>
+            
+            <div id="lockedCloudMsg" style="text-align:center; padding:20px;">
+                <div style="background:#f1f5f9; padding:20px; border-radius:12px; border:1px solid #cbd5e1; margin-bottom:20px;">
+                    <i class="fas fa-lock" style="font-size:3rem; color:#94a3b8; margin-bottom:15px;"></i>
+                    <h3 style="margin:0; color:#475569;">Fitur Premium Terkunci</h3>
+                    <p style="color:#64748b; font-size:0.9rem; margin-top:5px;">
+                        Sinkronisasi data ke HP Jamaah & TV secara Realtime adalah fitur berbayar.
+                    </p>
+                </div>
+
+                <h4 style="margin-bottom:15px; text-align:left;">Pilih Paket Aktivasi:</h4>
+                <div class="grid-2" style="margin-bottom:20px;">
+                    <div onclick="buyCloudPackage('bulanan', 15000)" style="border:1px solid #e2e8f0; border-radius:8px; padding:15px; cursor:pointer; transition:0.2s; position:relative;" onmouseover="this.style.borderColor='#10b981'" onmouseout="this.style.borderColor='#e2e8f0'">
+                        <div style="font-weight:bold; color:var(--text-main);">Bulanan</div>
+                        <div style="font-size:1.2rem; font-weight:bold; color:var(--primary);">Rp 15.000</div>
+                        <small style="color:var(--text-muted);">/ bulan</small>
+                        <div style="margin-top:5px; font-size:0.8rem; color:#10b981;"><i class="fas fa-credit-card"></i> Midtrans / Manual</div>
+                    </div>
+                    <div onclick="buyCloudPackage('tahunan', 150000)" style="border:1px solid #e2e8f0; border-radius:8px; padding:15px; cursor:pointer; transition:0.2s; position:relative;" onmouseover="this.style.borderColor='#10b981'" onmouseout="this.style.borderColor='#e2e8f0'">
+                        <div style="font-weight:bold; color:var(--text-main);">Tahunan</div>
+                        <div style="font-size:1.2rem; font-weight:bold; color:var(--primary);">Rp 150.000</div>
+                        <small style="color:var(--text-muted);">Hemat 2 bulan</small>
+                        <span class="badge bg-green-soft" style="position:absolute; top:-10px; right:10px;">Best Value</span>
+                        <div style="margin-top:5px; font-size:0.8rem; color:#10b981;"><i class="fas fa-credit-card"></i> Midtrans / Manual</div>
+                    </div>
+                </div>
+
+                <div style="border-top:1px dashed #cbd5e1; padding-top:20px;">
+                    <p style="margin-bottom:10px; font-weight:bold; color:var(--text-muted);">Punya Kode Voucher / Kode Masjid?</p>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" id="voucherInput" placeholder="Masukkan Kode Disini..." style="text-transform:uppercase; letter-spacing:1px; font-weight:bold;">
+                        <button class="btn btn-primary" onclick="redeemVoucher()">
+                            <i class="fas fa-key"></i> Buka
+                        </button>
+                    </div>
+                    <small style="color:#64748b; display:block; margin-top:5px;">Gunakan kode <strong>"MASJID"</strong> untuk gratis selamanya.</small>
+                </div>
+            </div>
+
+            <div id="unlockedCloudContent" class="hidden">
+                <div style="background:#ecfdf5; border:1px solid #a7f3d0; padding:10px; border-radius:8px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fas fa-crown" style="color:#d97706;"></i>
+                        <span style="font-weight:bold; color:#065f46;">Fitur Premium Aktif</span>
+                    </div>
+                    <small id="premiumExpiryDisplay" style="color:#047857;">Lifetime</small>
+                </div>
+
+                <p style="color:var(--text-muted); font-size:0.85rem;">
+                    Hubungkan perangkat ini dengan ID Masjid agar data terupdate secara otomatis dari cloud.
+                </p>
+
+                <div id="connectedState" class="hidden" style="text-align:center; padding:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; margin-bottom:20px;">
+                    <i class="fas fa-check-circle" style="font-size:3rem; color:var(--primary); margin-bottom:10px;"></i>
+                    <h3 style="margin:0 0 5px 0; color:#166534;">Terhubung!</h3>
+                    <p style="margin-bottom:15px;">ID Masjid: <strong id="lblConnectedID">...</strong></p>
+                    <button class="btn btn-danger btn-sm" onclick="disconnectID()">Putuskan Koneksi</button>
+                </div>
+
+                <div id="disconnectedState" class="sync-box">
+                    <i class="fas fa-wifi" style="font-size:2rem; color:var(--primary); margin-bottom:10px;"></i>
+                    <div style="font-size:0.9rem; margin-bottom:10px;">Masukkan ID Masjid untuk sinkronisasi</div>
+                    <input type="text" id="inputMasjidID" placeholder="Contoh: MSJD-1234">
+                    <button class="btn btn-primary" onclick="connectToID()" style="width:100%; margin-top:10px;">
+                        <i class="fas fa-plug"></i> Hubungkan Sekarang
+                    </button>
+                </div>
+
+                <div class="admin-only" style="margin-top:20px; border-top:1px dashed var(--border); padding-top:20px;">
+                    <div style="background: #eff6ff; padding:15px; border-radius:8px; border:1px solid #bfdbfe;">
+                        <strong style="color:#1e40af;"><i class="fas fa-user-shield"></i> Bagikan ID Masjid</strong>
+                        <p style="margin:5px 0; font-size:0.85rem; color:#1e40af;">Jamaah dapat menggunakan ID ini untuk sinkronisasi data:</p>
+                        <div style="text-align:center;">
+                            <div class="id-display" id="adminIdDisplay" style="background: white; border: 1px solid #bfdbfe;">...</div>
+                            <br>
+                            <button class="btn btn-sm btn-outline" onclick="generateAdminID()"><i class="fas fa-sync"></i> Reset ID</button>
+                            <button class="btn btn-sm btn-primary" onclick="copyAdminID()"><i class="fas fa-copy"></i> Salin ID</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="adminSettingsContainer" class="admin-only">
+            <div class="card admin-border">
+                <h3 style="color:var(--primary); margin-top:0; margin-bottom:15px;"><i class="fas fa-tools"></i> Pengaturan Masjid</h3>
+
+                <div id="passWarningBox" class="warning-box hidden">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <div style="flex:1;">
+                        <strong>Keamanan:</strong> Password masih default.
+                    </div>
+                    <u style="cursor:pointer; font-weight:bold;" onclick="changePassword()">Ganti</u>
+                </div>
+
+                <div class="form-group">
+                    <label>Nama Masjid</label>
+                    <input type="text" id="settingName">
+                </div>
+
+                <div class="form-group">
+                    <label>Alamat Lengkap</label>
+                    <input type="text" id="settingAddress">
+                </div>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Koreksi Waktu Sholat (Menit)</label>
+                        <input type="number" id="settingOffset" placeholder="0 (Gunakan minus untuk mundur)">
+                        <small style="color:var(--text-muted); font-size:0.75rem;">Contoh: 2 (tambah 2 menit) atau -2 (kurang 2 menit)</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Saldo Awal Kas (Rp)</label>
+                        <input type="number" id="settingInitialBalance" placeholder="0">
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-body); border:1px solid var(--border); padding:15px; border-radius:8px; margin-bottom:20px;">
+                    <strong style="color:var(--primary); display:block; margin-bottom:10px;"><i class="fas fa-bullhorn"></i> Informasi Berjalan</strong>
+                    <div class="form-group">
+                        <label>Teks Pengumuman</label>
+                        <textarea id="settingRunningText" rows="3" style="resize:none;"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Kecepatan (Detik)</label>
+                        <input type="range" id="settingSpeed" min="10" max="60" value="25">
+                        <div style="text-align:center; font-weight:bold; color:var(--primary); margin-top:5px;" id="speedValDisplay">25s</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; border-top: 1px solid var(--border); padding-top: 15px;">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-outline btn-sm" onclick="backupData()"><i class="fas fa-download"></i> Backup</button>
+                        <button class="btn btn-warning btn-sm" onclick="document.getElementById('restoreFile').click()"><i class="fas fa-upload"></i> Restore</button>
+                        <input type="file" id="restoreFile" class="hidden" onchange="restoreData(this)" accept=".json">
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="saveIdentity()">Simpan & Sync</button>
+                </div>
+            </div>
+
+            <div class="card" style="border:1px solid var(--danger);">
+                <div class="flex-between">
+                    <strong style="color:var(--danger);">Zona Bahaya</strong>
+                    <button class="btn btn-danger btn-sm" onclick="clearData()">Hapus Semua</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="nonAdminMsg" class="locked-box">
+            <i class="fas fa-lock locked-icon"></i>
+            <h3>Area Khusus Admin</h3>
+            <p>Silakan login untuk mengatur data masjid, password, dan melihat ID Masjid.</p>
+            <button class="btn btn-primary" onclick="toggleAuth()">Login Sekarang</button>
+        </div>
+    </section>
+
+    <section id="page-about" class="fade-in hidden">
+        <div class="card" style="text-align:center;">
+            <i class="fas fa-mosque" style="font-size:3rem; color:var(--primary); margin-bottom:15px;"></i>
+            <h2 style="margin-bottom: 5px;">Tentang Aplikasi</h2>
+            <div class="version-badge" id="appVersionDisplay">v...</div>
+            <p style="color:var(--text-muted); max-width:500px; margin:0 auto 20px auto;">
+                Smart DKM dengan fitur <strong>Realtime Sync</strong>. Data jadwal dan keuangan kini tersimpan di Cloud dan otomatis terupdate di HP Jamaah.
+            </p>
+            <div class="grid-2" style="max-width:600px; margin:20px auto; text-align:left;">
+                <div style="background:var(--bg-body); padding:10px; border-radius:8px;">
+                    <strong><i class="fas fa-wifi"></i> Online Mode</strong><br>
+                    <small>Data otomatis update jika terhubung internet.</small>
+                </div>
+                <div style="background:var(--bg-body); padding:10px; border-radius:8px;">
+                    <strong><i class="fas fa-database"></i> Offline Support</strong><br>
+                    <small>Tetap bisa dibuka walau tidak ada internet.</small>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<script>
+    /* =========================================
+       1. FIREBASE CONFIG & INITIALIZATION
+       ========================================= */
+const firebaseConfig = {
+    apiKey: "AIzaSyBlcKK_u9jCxKzxhin2hNEEwl3rbT6y9ao",
+    authDomain: "smart-dkm-712fc.firebaseapp.com",
+    projectId: "smart-dkm-712fc",
+    storageBucket: "smart-dkm-712fc.firebasestorage.app",
+    messagingSenderId: "521841627975",
+    appId: "1:521841627975:web:8db72575b51f96cb787262",
+    measurementId: "G-FLPCYWJ693"
+  };
+
+    let db;
+    let listenerUnsubscribe = null;
+    let APP_ID = localStorage.getItem('masjidID');
+    let iqomahTarget = null; // Variable for countdown
+    let scrollInterval = null; // Variable for auto scroll
+
+    /* === URUTAN YANG BENAR AGAR PERMANEN === */
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+
+        // 1. ATUR PERSISTENCE DULU (SEBELUM PANGGIL DATA LAIN)
+        db.enablePersistence({ synchronizeTabs: true })
+        .then(() => {
+            console.log("Penyimpanan Permanen AKTIF!");
+            initAppLogic();
+        })
+        .catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn("Offline tetap jalan, tapi hanya di satu tab utama.");
+            } else if (err.code == 'unimplemented') {
+                console.warn("Browser ini tidak mendukung offline storage.");
+            }
+            initAppLogic(); // Tetap jalan meskipun persistence gagal
+        });
+    } catch (e) {
+        console.error("Firebase Init Error", e);
+    }
+
+    function initAppLogic() {
+        console.log("Firebase initialized");
+        loadSettings();
+        startClock();
+
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('mDate');
+        const finDateInput = document.getElementById('finDate');
+        if(dateInput) dateInput.value = today;
+        if(finDateInput) finDateInput.value = today;
+
+        renderTable();
+        renderFinance();
+        checkLoginState();
+        detectLocation();
+        updateNotifBtn();
+
+        // === LOGIKA BARU: CEK PREMIUM SEBELUM CONNECT ===
+        initPremiumCheck();
+        // ================================================
+
+        // Jika ID ada, kita panggil UI-nya saja. 
+        // Koneksi Cloud sekarang dihandle oleh initPremiumCheck()
+        if (APP_ID) {
+            showConnectedUI(APP_ID);
+        } else {
+            if(localStorage.getItem('isAdmin') === 'true') { generateAdminID(); }
+        }
+    }
+
+    /* --- CORE CONFIG --- */
+    const APP_VERSION = "2.9.26"; // Updated Version with Midtrans
+    const DEFAULT_PASS = "admin123";
+    const DEFAULT_RUNNING_TEXT = "Selamat Datang di Aplikasi Smart DKM. Mohon Nonaktifkan HP Saat Sholat. Jagalah Kebersihan dan Keindahan Masjid Kita.";
+
+    let currentTab = 'harian';
+    let todayTimings = null;
+
+    /* --- SECURITY SCRIPT --- */
+    document.addEventListener('contextmenu', event => event.preventDefault());
+    document.onkeydown = function(e) {
+        if (e.keyCode == 123) return false; // F12
+        if (e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+        if (e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+        if (e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+        if (e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+    };
+
+    // --- INIT WRAPPER ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const sidebarVer = document.getElementById('sidebarVersion');
+        const appVer = document.getElementById('appVersionDisplay');
+        if(sidebarVer) sidebarVer.innerText = `v${APP_VERSION}`;
+        if(appVer) appVer.innerText = `Versi ${APP_VERSION}`;
+
+        // Android / Web Permission Check
+        if (typeof Android === 'undefined' && "Notification" in window && Notification.permission === "default") {
+            setTimeout(() => {
+                  Swal.fire({
+                    title: 'Aktifkan Notifikasi Adzan?',
+                    text: "Dapatkan pengingat waktu sholat otomatis.",
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, Aktifkan',
+                    cancelButtonText: 'Nanti Saja'
+                }).then((result) => {
+                    if (result.isConfirmed) { reqNotification(); }
+                });
+            }, 2000);
+        }
+    });
+
+    /* =========================================
+       LOGIKA PREMIUM & MIDTRANS
+       ========================================= */
+    const PREMIUM_CODE = "MASJID"; // Kode sakti untuk gratis
+    const PREMIUM_KEY = "isPremiumAccount";
+    const PREMIUM_EXPIRY_KEY = "premiumExpiry";
+
+    // Helper: Tambah Keuangan otomatis saat beli paket
+    function addFinanceInternal(amount, desc) {
+        const today = new Date().toISOString().split('T')[0];
+        const d = { 
+            id: Date.now(), 
+            date: today, 
+            type: 'masuk', 
+            amount: amount.toString(), 
+            desc: desc 
+        };
+        let data = JSON.parse(localStorage.getItem('keuanganMasjid')) || [];
+        data.push(d); 
+        localStorage.setItem('keuanganMasjid', JSON.stringify(data));
+        if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+        renderFinance();
+    }
+
+    function initPremiumCheck() {
+        const isPrem = localStorage.getItem(PREMIUM_KEY) === 'true';
+        const expiry = localStorage.getItem(PREMIUM_EXPIRY_KEY);
+        const lockedMsg = document.getElementById('lockedCloudMsg');
+        const unlockedContent = document.getElementById('unlockedCloudContent');
+        const expiryDisplay = document.getElementById('premiumExpiryDisplay');
+
+        // Cek kadaluarsa jika bukan lifetime
+        if(isPrem && expiry && expiry !== 'LIFETIME') {
+            if(new Date().getTime() > parseInt(expiry)) {
+                // Sudah kadaluarsa
+                localStorage.removeItem(PREMIUM_KEY);
+                localStorage.removeItem(PREMIUM_EXPIRY_KEY);
+                Swal.fire('Masa Aktif Habis', 'Paket Premium Cloud Anda telah berakhir.', 'warning');
+                return initPremiumCheck(); // Re-run as free
+            }
+        }
+
+        if(isPrem) {
+            if(lockedMsg) lockedMsg.classList.add('hidden');
+            if(unlockedContent) unlockedContent.classList.remove('hidden');
+            
+            if(expiry === 'LIFETIME') {
+                if(expiryDisplay) expiryDisplay.innerText = "Selamanya (Gratis)";
+            } else {
+                const dateExp = new Date(parseInt(expiry)).toLocaleDateString('id-ID');
+                if(expiryDisplay) expiryDisplay.innerText = "Aktif s.d " + dateExp;
+            }
+
+            // Jika premium aktif, jalankan koneksi cloud otomatis jika ID ada
+            if(APP_ID && !listenerUnsubscribe) {
+                connectRealtime(APP_ID);
+                showConnectedUI(APP_ID);
+            }
+        } else {
+            if(lockedMsg) lockedMsg.classList.remove('hidden');
+            if(unlockedContent) unlockedContent.classList.add('hidden');
+            
+            // Matikan koneksi jika tidak premium
+            if(listenerUnsubscribe) {
+                listenerUnsubscribe();
+                listenerUnsubscribe = null;
+            }
+        }
+    }
+
+    // FUNGSI UTAMA: PEMBAYARAN VIA MIDTRANS DENGAN BACKEND OTOMATIS
+    function buyCloudPackage(type, price) {
+        Swal.fire({
+            title: 'Metode Pembayaran',
+            text: `Anda akan membeli paket ${type} seharga ${formatRp(price)}`,
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Bayar Sekarang',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            // INTEGRASI BACKEND DISINI
+            if (result.isConfirmed) {
+                Swal.fire({ title: 'Menghubungkan...', didOpen: () => Swal.showLoading() });
+
+// Ganti bagian depannya saja. Bagian belakang (/api/get-snap-token) TETAP SAMA.
+fetch('https://smartdkmm.onrender.com/api/get-snap-token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ price: price })
+})
+                .then(response => response.json())
+                .then(data => {
+                    Swal.close();
+                    window.snap.pay(data.token, {
+                        onSuccess: function(result) { activatePremium(type, price, "Midtrans"); },
+                        onPending: function(result) { Swal.fire('Pending', 'Selesaikan pembayaran', 'info'); },
+                        onError: function(result) { Swal.fire('Gagal', 'Pembayaran gagal', 'error'); }
+                    });
+                })
+                .catch(err => Swal.fire('Error', 'Server Backend belum jalan!', 'error'));
+            }
+        });
+    }
+
+    function activatePremium(type, price, method) {
+        const now = new Date().getTime();
+        let expiry;
+        
+        if(type === 'bulanan') expiry = now + (30 * 24 * 60 * 60 * 1000); // 30 hari
+        else expiry = now + (365 * 24 * 60 * 60 * 1000); // 1 tahun
+
+        localStorage.setItem(PREMIUM_KEY, 'true');
+        localStorage.setItem(PREMIUM_EXPIRY_KEY, expiry.toString());
+        
+        // Catat ke keuangan otomatis sebagai pemasukan
+        addFinanceInternal(price, `Pembelian Fitur Cloud (${type}) via ${method}`);
+
+        Swal.fire('Sukses!', 'Fitur Cloud Sync kini aktif. Data tersimpan aman.', 'success');
+        initPremiumCheck();
+    }
+
+    function redeemVoucher() {
+        const input = document.getElementById('voucherInput');
+        const code = input.value.trim().toUpperCase();
+
+        if(!code) return Swal.fire('Error', 'Masukkan kode voucher', 'error');
+
+        if(code === PREMIUM_CODE) {
+            localStorage.setItem(PREMIUM_KEY, 'true');
+            localStorage.setItem(PREMIUM_EXPIRY_KEY, 'LIFETIME');
+            
+            Swal.fire({
+                title: 'Kode Diterima!',
+                text: 'Selamat! Akun Masjid Anda telah diupgrade ke Premium (LIFETIME) Gratis.',
+                icon: 'success',
+                confirmButtonText: 'Mulai Sinkronisasi'
+            }).then(() => {
+                initPremiumCheck();
+            });
+        } else {
+            Swal.fire('Gagal', 'Kode Voucher tidak valid atau kadaluarsa.', 'error');
+        }
+    }
+
+    /* =========================================
+       2. REALTIME SYNC LOGIC
+       ========================================= */
+    function connectRealtime(id) {
+        if(!db) return;
+        const statusEl = document.getElementById('connStatus');
+        statusEl.className = 'status-pill status-online';
+        statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sync...';
+
+        if (listenerUnsubscribe) listenerUnsubscribe();
+
+        listenerUnsubscribe = db.collection('smart_dkm').doc(id)
+            .onSnapshot((doc) => {
+                statusEl.innerHTML = '<i class="fas fa-wifi"></i> Online';
+                if (doc.exists) {
+                    const data = doc.data();
+                    if(data.jadwal) localStorage.setItem('jadwalMasjid', JSON.stringify(data.jadwal));
+                    if(data.keuangan) localStorage.setItem('keuanganMasjid', JSON.stringify(data.keuangan));
+                    if(data.info) {
+                        localStorage.setItem('mosqueName', data.info.nama);
+                        localStorage.setItem('mosqueAddr', data.info.alamat);
+                        localStorage.setItem('mosqueRunningText', data.info.runningText || DEFAULT_RUNNING_TEXT);
+                        localStorage.setItem('mosqueSpeed', data.info.runningSpeed || "25");
+                        // Sync new settings if exist
+                        if(data.info.offset) localStorage.setItem('prayerOffset', data.info.offset);
+                        if(data.info.initialBalance) localStorage.setItem('initialBalance', data.info.initialBalance);
+                    }
+                    renderTable();
+                    renderFinance();
+                    loadSettings();
+                } else {
+                    if(!localStorage.getItem('isAdmin')) {
+                        statusEl.className = 'status-pill status-offline';
+                        statusEl.innerHTML = 'ID Salah';
+                    }
+                }
+            }, (err) => {
+                statusEl.className = 'status-pill status-offline';
+                statusEl.innerHTML = '<i class="fas fa-database"></i> Offline Mode';
+            });
+    }
+
+    async function saveToCloud() {
+        // Logic check: only save if premium is active
+        if(localStorage.getItem(PREMIUM_KEY) !== 'true') return;
+
+        if(!APP_ID) generateAdminID();
+        if(!db) return;
+
+        const payload = {
+            jadwal: JSON.parse(localStorage.getItem('jadwalMasjid')) || [],
+            keuangan: JSON.parse(localStorage.getItem('keuanganMasjid')) || [],
+            info: {
+                nama: localStorage.getItem('mosqueName') || "Smart DKM",
+                alamat: localStorage.getItem('mosqueAddr') || "",
+                runningText: localStorage.getItem('mosqueRunningText') || DEFAULT_RUNNING_TEXT,
+                runningSpeed: localStorage.getItem('mosqueSpeed') || "25",
+                offset: localStorage.getItem('prayerOffset') || "0",
+                initialBalance: localStorage.getItem('initialBalance') || "0"
+            },
+            lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        try {
+            await db.collection('smart_dkm').doc(APP_ID).set(payload, { merge: true });
+        } catch(e) { console.error("Cloud push failed", e); }
+    }
+
+    /* --- ID MANAGEMENT --- */
+    function generateAdminID() {
+        if(APP_ID) { showConnectedUI(APP_ID); connectRealtime(APP_ID); return; }
+        const newID = 'MSJD-' + Math.floor(1000 + Math.random() * 9000);
+        APP_ID = newID;
+        localStorage.setItem('masjidID', newID);
+        showConnectedUI(newID);
+        connectRealtime(newID);
+    }
+    function connectToID() {
+        const input = document.getElementById('inputMasjidID').value.trim().toUpperCase();
+        if(input.length < 5) return Swal.fire('Error', 'ID tidak valid', 'warning');
+        APP_ID = input;
+        localStorage.setItem('masjidID', APP_ID);
+        connectRealtime(APP_ID);
+        showConnectedUI(APP_ID);
+        Swal.fire('Berhasil', 'Menghubungkan ke ' + APP_ID, 'success');
+    }
+    function disconnectID() {
+        Swal.fire({
+            title: 'Putuskan Koneksi?',
+            text: "Data tidak akan update otomatis lagi.",
+            icon: 'warning',
+            showCancelButton: true
+        }).then((result) => {
+            if (result.isConfirmed) {
+                localStorage.removeItem('masjidID');
+                APP_ID = null;
+                if(listenerUnsubscribe) listenerUnsubscribe();
+                location.reload();
+            }
+        });
+    }
+    function showConnectedUI(id) {
+        const conState = document.getElementById('connectedState');
+        const disState = document.getElementById('disconnectedState');
+        const lblId = document.getElementById('lblConnectedID');
+        const admId = document.getElementById('adminIdDisplay');
+        if(conState) conState.classList.remove('hidden');
+        if(disState) disState.classList.add('hidden');
+        if(lblId) lblId.innerText = id;
+        if(admId) admId.innerText = id;
+    }
+    function copyAdminID() {
+        navigator.clipboard.writeText(APP_ID);
+        Swal.fire({toast:true, position:'top', icon:'success', title:'ID Disalin', showConfirmButton:false, timer:1000});
+    }
+
+    /* =========================================
+       3. CRUD FUNCTIONS (4 TABS LOGIC)
+       ========================================= */
+    function switchScheduleTab(mode) {
+        currentTab = mode;
+        document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-outline'); });
+        document.querySelectorAll('.input-section').forEach(el => el.classList.add('hidden'));
+
+        if(mode === 'harian') {
+            document.getElementById('tabHarian').classList.add('btn-primary');
+            document.getElementById('tabHarian').classList.remove('btn-outline');
+            document.getElementById('inputHarian').classList.remove('hidden');
+            checkFriday();
+        } else if(mode === 'ramadhan') {
+            document.getElementById('tabRamadhan').classList.add('btn-primary');
+            document.getElementById('tabRamadhan').classList.remove('btn-outline');
+            document.getElementById('inputRamadhan').classList.remove('hidden');
+        } else if(mode === 'idul_fitri') {
+            document.getElementById('tabIdulFitri').classList.add('btn-primary');
+            document.getElementById('tabIdulFitri').classList.remove('btn-outline');
+            document.getElementById('inputFitri').classList.remove('hidden');
+        } else if(mode === 'idul_adha') {
+            document.getElementById('tabIdulAdha').classList.add('btn-primary');
+            document.getElementById('tabIdulAdha').classList.remove('btn-outline');
+            document.getElementById('inputAdha').classList.remove('hidden');
+        }
+        renderTable();
+    }
+
+    function checkFriday() {
+        if(currentTab !== 'harian') return;
+        const dateVal = document.getElementById('mDate').value;
+        const day = new Date(dateVal).getDay();
+        const fFields = document.getElementById('fridayFields');
+        if(fFields) fFields.style.display = (day === 5) ? 'block' : 'none';
+    }
+
+    function addManual() {
+        const date = document.getElementById('mDate').value;
+        if(!date) return Swal.fire('Error', 'Pilih tanggal dulu', 'warning');
+
+        let newItem = { date, mode: currentTab };
+
+        if(currentTab === 'harian') {
+            newItem.imam = { subuh: document.getElementById('mSubuh').value, dzuhur: document.getElementById('mDzuhur').value, ashar: document.getElementById('mAshar').value, maghrib: document.getElementById('mMaghrib').value, isya: document.getElementById('mIsya').value };
+            if(new Date(date).getDay() === 5) {
+                newItem.jumat = { khatib: document.getElementById('mKhatib').value, imam: document.getElementById('mImamJumat').value, muazin: document.getElementById('mMuazin').value };
+            }
+        }
+        else if (currentTab === 'ramadhan') {
+            newItem.penceramah = document.getElementById('mPenceramah').value;
+            newItem.imam = document.getElementById('mImamTarawih').value;
+            newItem.bilal = document.getElementById('mBilalTarawih').value;
+            // NEW: RAMADHAN NIGHT
+            newItem.night = document.getElementById('mRamadhanNight').value;
+        }
+        else if (currentTab === 'idul_fitri') {
+            newItem.khatib = document.getElementById('mKhatibFitri').value;
+            newItem.imam = document.getElementById('mImamFitri').value;
+            newItem.bilal = document.getElementById('mBilalFitri').value;
+        }
+        else if (currentTab === 'idul_adha') {
+            newItem.khatib = document.getElementById('mKhatibAdha').value;
+            newItem.imam = document.getElementById('mImamAdha').value;
+            newItem.bilal = document.getElementById('mBilalAdha').value;
+        }
+
+        saveToStorage('jadwalMasjid', newItem, 'date', 'mode');
+        if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+
+        Swal.fire('Berhasil', 'Jadwal disimpan', 'success');
+        renderTable();
+        document.querySelectorAll('.input-section input[type=text], .input-section input[type=number]').forEach(i => i.value = '');
+    }
+
+    function deleteData(dateVal, modeVal) {
+        Swal.fire({title:'Hapus Jadwal?', icon:'warning', showCancelButton:true}).then(r => {
+            if(r.isConfirmed) {
+                let data = JSON.parse(localStorage.getItem('jadwalMasjid'));
+                data = data.filter(x => !(x.date === dateVal && x.mode === modeVal));
+                localStorage.setItem('jadwalMasjid', JSON.stringify(data));
+                if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+                renderTable();
+            }
+        });
+    }
+
+    function saveToStorage(key, item, uniqueKey1, uniqueKey2) {
+        let data = JSON.parse(localStorage.getItem(key)) || [];
+        data = data.filter(x => !(x[uniqueKey1] === item[uniqueKey1] && x[uniqueKey2] === item[uniqueKey2]));
+        data.push(item);
+        localStorage.setItem(key, JSON.stringify(data));
+    }
+
+    /* --- HELPER STATUS --- */
+    function getStatusBadge(dateStr) {
+        const today = new Date().toISOString().split('T')[0];
+        if (dateStr === today) return '<span class="badge bg-green-soft">Hari Ini</span>';
+        if (dateStr > today) return '<span class="badge bg-blue-soft">Menunggu</span>';
+        return '<span class="badge bg-gray-soft">Selesai</span>';
+    }
+
+    /* --- TABLE RENDER LOGIC --- */
+    function renderTable() {
+        const data = JSON.parse(localStorage.getItem('jadwalMasjid')) || [];
+        // Check if TV mode is active and filter based on selection
+        let filterMode = currentTab;
+        if (document.body.classList.contains('tv-mode')) {
+             const tvSelect = document.getElementById('tvModeSelect');
+             if(tvSelect) filterMode = tvSelect.value;
+        }
+
+        const filtered = data.filter(d => (d.mode || 'harian') === filterMode);
+        
+        filtered.sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        const tbody = document.getElementById('tableBody');
+        const thead = document.getElementById('tableHead');
+        const empty = document.getElementById('emptyMsg');
+
+        if(!tbody || !thead) return;
+
+        tbody.innerHTML = '';
+        if(filtered.length === 0) {
+            if(empty) empty.style.display = 'block';
+            thead.innerHTML='';
+            return;
+        }
+        if(empty) empty.style.display = 'none';
+
+        if(filterMode === 'harian') {
+             thead.innerHTML = `<tr><th width="15%">Tanggal</th><th width="35%">Imam Rawatib</th><th width="30%">Jumat</th><th width="10%">Status</th><th width="10%" class="col-action admin-only">Aksi</th></tr>`;
+             filtered.forEach(item => {
+                const i = item.imam || {};
+                const j = item.jumat || {};
+                let colMain = `<div class="detail-list"><div class="detail-row"><span class="detail-lbl">Subuh</span> <span>${i.subuh||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Dzuhur</span> <span>${i.dzuhur||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Ashar</span> <span>${i.ashar||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Maghrib</span> <span>${i.maghrib||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Isya</span> <span>${i.isya||'-'}</span></div></div>`;
+                let colExtra = (j.khatib || j.imam) ? `<div class="detail-list"><div class="detail-row"><span class="detail-lbl">Khatib</span> <span>${j.khatib||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Imam</span> <span>${j.imam||'-'}</span></div><div class="detail-row"><span class="detail-lbl">Muazin</span> <span>${j.muazin||'-'}</span></div></div>` : '-';
+                tbody.innerHTML += `<tr><td>${fmtDate(item.date)}</td><td>${colMain}</td><td>${colExtra}</td><td>${getStatusBadge(item.date)}</td><td class="col-action admin-only"><button class="btn btn-danger btn-sm" onclick="deleteData('${item.date}','harian')">Hapus</button></td></tr>`;
+             });
+        }
+        else if (filterMode === 'ramadhan') {
+            thead.innerHTML = `<tr><th>Tanggal</th><th>Penceramah</th><th>Imam Tarawih</th><th>Malam</th><th>Bilal</th><th>Status</th><th class="admin-only">Aksi</th></tr>`;
+            filtered.forEach(item => {
+                let nightBadge = item.night ? `<span class="badge bg-purple-soft">Ramadhan ${item.night}</span>` : '-';
+                tbody.innerHTML += `<tr><td>${fmtDate(item.date)}</td><td>${item.penceramah||'-'}</td><td>${item.imam||'-'}</td><td>${nightBadge}</td><td>${item.bilal||'-'}</td><td>${getStatusBadge(item.date)}</td><td class="admin-only"><button class="btn btn-danger btn-sm" onclick="deleteData('${item.date}','ramadhan')">Hapus</button></td></tr>`;
+            });
+        }
+        else if (filterMode === 'idul_fitri') {
+            thead.innerHTML = `<tr><th>Tanggal</th><th>Jenis</th><th>Khatib</th><th>Imam</th><th>Bilal</th><th>Status</th><th class="admin-only">Aksi</th></tr>`;
+            filtered.forEach(item => {
+                tbody.innerHTML += `<tr><td>${fmtDate(item.date)}</td><td><span class="badge bg-green-soft">Idul Fitri</span></td><td>${item.khatib||'-'}</td><td>${item.imam||'-'}</td><td>${item.bilal||'-'}</td><td>${getStatusBadge(item.date)}</td><td class="admin-only"><button class="btn btn-danger btn-sm" onclick="deleteData('${item.date}','idul_fitri')">Hapus</button></td></tr>`;
+            });
+        }
+        else if (filterMode === 'idul_adha') {
+            thead.innerHTML = `<tr><th>Tanggal</th><th>Jenis</th><th>Khatib</th><th>Imam</th><th>Bilal</th><th>Status</th><th class="admin-only">Aksi</th></tr>`;
+            filtered.forEach(item => {
+                tbody.innerHTML += `<tr><td>${fmtDate(item.date)}</td><td><span class="badge bg-amber-soft">Idul Adha</span></td><td>${item.khatib||'-'}</td><td>${item.imam||'-'}</td><td>${item.bilal||'-'}</td><td>${getStatusBadge(item.date)}</td><td class="admin-only"><button class="btn btn-danger btn-sm" onclick="deleteData('${item.date}','idul_adha')">Hapus</button></td></tr>`;
+            });
+        }
+        updateAdminVisibility();
+    }
+
+    function fmtDate(d) { return new Date(d).toLocaleDateString('id-ID', {weekday:'short', day:'numeric', month:'short'}); }
+
+    /* --- FINANCE --- */
+    function addFinance() {
+        const d = { id: Date.now(), date: document.getElementById('finDate').value, type: document.getElementById('finType').value, amount: document.getElementById('finAmount').value, desc: document.getElementById('finDesc').value };
+        if(!d.amount) return Swal.fire('Error','Isi jumlah','error');
+        let data = JSON.parse(localStorage.getItem('keuanganMasjid')) || [];
+        data.push(d); localStorage.setItem('keuanganMasjid', JSON.stringify(data));
+        if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+        renderFinance();
+        document.getElementById('finAmount').value = '';
+    }
+    function renderFinance() {
+        const data = JSON.parse(localStorage.getItem('keuanganMasjid')) || [];
+        data.sort((a,b) => new Date(b.date) - new Date(a.date));
+        
+        const initialBal = parseInt(localStorage.getItem('initialBalance') || '0');
+        
+        const tbody = document.getElementById('financeBody');
+        if(!tbody) return;
+        tbody.innerHTML = '';
+        let inTotal = 0, outTotal = 0;
+        data.forEach(d => {
+            const val = parseInt(d.amount);
+            if(d.type === 'masuk') inTotal += val; else outTotal += val;
+            const typeBadge = d.type === 'masuk' ? '<span class="badge bg-green-soft">Masuk</span>' : '<span class="badge bg-gray-soft">Keluar</span>';
+            tbody.innerHTML += `<tr><td>${fmtDate(d.date)}</td><td>${d.desc}</td><td>${typeBadge}</td><td>${formatRp(val)}</td><td class="admin-only"><button class="btn btn-danger btn-sm" onclick="deleteFinance(${d.id})">Hapus</button></td></tr>`;
+        });
+        
+        const inEl = document.getElementById('totalIn');
+        const outEl = document.getElementById('totalOut');
+        const balEl = document.getElementById('balance');
+        const initEl = document.getElementById('totalInitial'); 
+
+        if(initEl) initEl.innerText = formatRp(initialBal);
+        if(inEl) inEl.innerText = formatRp(inTotal);
+        if(outEl) outEl.innerText = formatRp(outTotal);
+        if(balEl) balEl.innerText = formatRp((initialBal + inTotal) - outTotal); 
+        updateAdminVisibility();
+    }
+    function deleteFinance(id) {
+        let data = JSON.parse(localStorage.getItem('keuanganMasjid')) || [];
+        data = data.filter(item => item.id !== id);
+        localStorage.setItem('keuanganMasjid', JSON.stringify(data));
+        if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+        renderFinance();
+    }
+
+    function downloadCSV() {
+        const data = JSON.parse(localStorage.getItem('keuanganMasjid')) || [];
+        if(data.length === 0) return Swal.fire('Kosong', 'Belum ada data keuangan', 'info');
+
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Tanggal,Tipe,Keterangan,Jumlah (Rp)\n";
+
+        data.forEach(row => {
+            csvContent += `${row.date},${row.type},"${row.desc}",${row.amount}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "Laporan_Keuangan_Masjid.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    function formatRp(n) { return new Intl.NumberFormat('id-ID', {style:'currency', currency:'IDR', minimumFractionDigits:0}).format(n); }
+    function getPass() { return localStorage.getItem('appPass') || DEFAULT_PASS; }
+
+    /* --- AUTH & UI STATE --- */
+    async function toggleAuth() {
+        const isCurrentlyAdmin = localStorage.getItem('isAdmin') === 'true';
+        if(isCurrentlyAdmin) {
+            localStorage.removeItem('isAdmin'); checkLoginState(); Swal.fire('Logout', 'Mode User Aktif', 'success');
+        } else {
+            const { value: password } = await Swal.fire({ title: 'Login Admin', input: 'password', showCancelButton: true });
+            if (password) {
+                if(password === getPass()) {
+                    localStorage.setItem('isAdmin', 'true');
+                    checkLoginState(); if(!APP_ID) generateAdminID();
+                    if(password === DEFAULT_PASS) Swal.fire({icon: 'warning', title: 'Ganti Password!', text: 'Segera ganti password default anda.'});
+                    else Swal.fire('Login Berhasil', 'Mode Admin Aktif Selamanya', 'success');
+                } else { Swal.fire('Gagal', 'Password salah', 'error'); }
+            }
+        }
+    }
+    function checkLoginState() {
+        const isAdmin = localStorage.getItem('isAdmin') === 'true';
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none');
+        document.querySelectorAll('td.admin-only, th.admin-only').forEach(el => el.style.display = isAdmin ? 'table-cell' : 'none');
+        const nonAdm = document.getElementById('nonAdminMsg');
+        if(nonAdm) nonAdm.style.display = isAdmin ? 'none' : 'block';
+        const btn = document.getElementById('authBtn');
+        const passInfo = document.getElementById('defaultPassInfo');
+        const warnBox = document.getElementById('passWarningBox');
+        if(isAdmin) {
+            if(btn) { btn.innerHTML = 'Logout Admin'; btn.classList.replace('btn-primary', 'btn-danger'); }
+            if(passInfo) passInfo.style.display = 'none';
+            if(warnBox) warnBox.style.display = (getPass() === DEFAULT_PASS) ? 'flex' : 'none';
+        } else {
+            if(btn) { btn.innerHTML = 'Login Admin'; btn.classList.replace('btn-danger', 'btn-primary'); }
+            if(passInfo) passInfo.style.display = 'block';
+            if(warnBox) warnBox.style.display = 'none';
+        }
+    }
+    function updateAdminVisibility() { checkLoginState(); }
+    function saveIdentity() {
+        const name = document.getElementById('settingName').value;
+        const addr = document.getElementById('settingAddress').value;
+        const rText = document.getElementById('settingRunningText').value;
+        const rSpeed = document.getElementById('settingSpeed').value;
+        const offset = document.getElementById('settingOffset').value;
+        const initBal = document.getElementById('settingInitialBalance').value;
+
+        if(name) {
+            localStorage.setItem('mosqueName', name);
+            localStorage.setItem('mosqueAddr', addr);
+            localStorage.setItem('mosqueRunningText', rText);
+            localStorage.setItem('mosqueSpeed', rSpeed);
+            localStorage.setItem('prayerOffset', offset);
+            localStorage.setItem('initialBalance', initBal);
+
+            loadSettings();
+            if(localStorage.getItem('isAdmin') === 'true') saveToCloud();
+            Swal.fire('Tersimpan', '', 'success');
+        }
+    }
+    function loadSettings() {
+        const name = localStorage.getItem('mosqueName') || "Smart DKM";
+        const addr = localStorage.getItem('mosqueAddr') || "";
+        const rText = localStorage.getItem('mosqueRunningText') || DEFAULT_RUNNING_TEXT;
+        const rSpeed = localStorage.getItem('mosqueSpeed') || "25";
+        const theme = localStorage.getItem('theme');
+        const offset = localStorage.getItem('prayerOffset') || "0";
+        const initBal = localStorage.getItem('initialBalance') || "0";
+
+        const dName = document.getElementById('displayMosqueName');
+        const dText = document.getElementById('displayRunningText');
+        const sName = document.getElementById('settingName');
+        const sAddr = document.getElementById('settingAddress');
+        const sText = document.getElementById('settingRunningText');
+        const sSpeed = document.getElementById('settingSpeed');
+        const sDisp = document.getElementById('speedValDisplay');
+        const sOffset = document.getElementById('settingOffset');
+        const sInitBal = document.getElementById('settingInitialBalance');
+
+        if(dName) dName.innerText = name;
+        if(dText) dText.innerText = rText;
+
+        document.documentElement.style.setProperty('--marquee-speed', rSpeed + 's');
+
+        if(sName) sName.value = name;
+        if(sAddr) sAddr.value = addr;
+        if(sText) sText.value = rText;
+        if(sSpeed) sSpeed.value = rSpeed;
+        if(sDisp) sDisp.innerText = rSpeed + 's';
+        if(sOffset) sOffset.value = offset;
+        if(sInitBal) sInitBal.value = initBal;
+
+        document.title = name;
+        const addrEl = document.getElementById('displayMosqueAddress');
+        if(addrEl) {
+            if(addr) { addrEl.innerText = addr; addrEl.style.display = 'block'; }
+            else { addrEl.style.display = 'none'; }
+        }
+
+        if(theme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            const tBtn = document.getElementById('themeBtn');
+            if(tBtn) tBtn.innerHTML = '<i class="fas fa-sun"></i> Light';
+        }
+        const hDate = document.getElementById('headerDate');
+        if(hDate) hDate.innerText = new Date().toLocaleDateString('id-ID', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+        updateMarquee();
+    }
+
+    function updateMarquee() {
+        const baseText = localStorage.getItem('mosqueRunningText') || DEFAULT_RUNNING_TEXT;
+        let timeText = "";
+        if(todayTimings) {
+            timeText = `   ||   JADWAL SHOLAT HARI INI: Subuh ${todayTimings.Fajr}  •  Dzuhur ${todayTimings.Dhuhr}  •  Ashar ${todayTimings.Asr}  •  Maghrib ${todayTimings.Maghrib}  •  Isya ${todayTimings.Isha}`;
+        }
+        const ticker = document.getElementById('displayRunningText');
+        if(ticker) ticker.innerText = baseText + timeText;
+    }
+    
+    function toggleTVMode(active) {
+        if(active) {
+            document.body.classList.add('tv-mode');
+            document.getElementById('tvExitBtn').classList.remove('hidden');
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+            navigate('home'); 
+            renderTable(); 
+            setTimeout(startAutoScroll, 2000); 
+        } else {
+            document.body.classList.remove('tv-mode');
+            document.getElementById('tvExitBtn').classList.add('hidden');
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+            stopAutoScroll();
+            switchScheduleTab(currentTab);
+        }
+    }
+
+    function startAutoScroll() {
+        stopAutoScroll(); 
+        const container = document.getElementById('scheduleContainer');
+        if(!container) return;
+
+        let scrollSpeed = 1; 
+        let scrollDelay = 50; 
+        let holding = false;
+
+        container.scrollTop = 0;
+
+        scrollInterval = setInterval(() => {
+            if(holding) return;
+            if(container.scrollTop + container.clientHeight >= container.scrollHeight) {
+                 holding = true;
+                 setTimeout(() => {
+                      container.scrollTop = 0; 
+                      holding = false;
+                 }, 3000); 
+            } else {
+                 container.scrollTop += scrollSpeed;
+            }
+        }, scrollDelay);
+    }
+
+    function stopAutoScroll() {
+        if(scrollInterval) clearInterval(scrollInterval);
+    }
+
+    function startClock() {
+        setInterval(() => {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('id-ID', {hour12:false});
+            const hTime = document.getElementById('headerTime');
+            if(hTime) hTime.innerText = timeStr;
+
+            if(todayTimings && now.getSeconds() === 0) checkAlarm(timeStr.substring(0, 5));
+
+            if(iqomahTarget) {
+                const diff = iqomahTarget - now;
+                if(diff <= 0) {
+                    iqomahTarget = null;
+                    document.getElementById('iqomahCountdown').style.display = 'none';
+                    triggerNotification("IQOMAH", "Luruskan dan rapatkan shaf.");
+                } else {
+                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((diff % (1000 * 60)) / 1000);
+                    document.getElementById('iqomahTimer').innerText = `${m}:${s < 10 ? '0'+s : s}`;
+                }
+            }
+        }, 1000);
+    }
+
+    function checkAlarm(currentTime) {
+        const keys = { Fajr:'Subuh', Dhuhr:'Dzuhur', Asr:'Ashar', Maghrib:'Maghrib', Isha:'Isya' };
+        const todayStr = new Date().toISOString().split('T')[0];
+        const allData = JSON.parse(localStorage.getItem('jadwalMasjid')) || [];
+        const fitri = allData.find(d => d.date === todayStr && d.mode === 'idul_fitri');
+        const adha = allData.find(d => d.date === todayStr && d.mode === 'idul_adha');
+        const todaySchedule = allData.find(d => d.date === todayStr && (d.mode === 'harian' || !d.mode));
+
+        for (const [key, label] of Object.entries(keys)) {
+            if(todayTimings[key] === currentTime) {
+                let title = `Waktu ${label} Tiba`;
+                let bodyMsg = `Saatnya menunaikan sholat ${label}`;
+
+                if(label === 'Subuh') {
+                    if(fitri) { title = "Selamat Idul Fitri"; bodyMsg = `Khatib: ${fitri.khatib}`; }
+                    else if(adha) { title = "Selamat Idul Adha"; bodyMsg = `Khatib: ${adha.khatib}`; }
+                }
+                else if(todaySchedule) {
+                    if(label === 'Dzuhur' && new Date().getDay() === 5 && todaySchedule.jumat) {
+                        title = "Waktunya Sholat Jumat"; bodyMsg = `Khatib: ${todaySchedule.jumat.khatib}`;
+                    }
+                }
+
+                triggerNotification(title, bodyMsg);
+                let iqomahMins = 10;
+                if(label === 'Subuh') iqomahMins = 15;
+                if(label === 'Maghrib') iqomahMins = 10;
+                startIqomahCountdown(iqomahMins);
+            }
+        }
+    }
+
+    function startIqomahCountdown(minutes) {
+        const now = new Date();
+        iqomahTarget = new Date(now.getTime() + minutes * 60000);
+        const el = document.getElementById('iqomahCountdown');
+        if(el) el.style.display = 'block';
+    }
+
+    function detectLocation() {
+        const lat = localStorage.getItem('masjidLat');
+        const lon = localStorage.getItem('masjidLon');
+        const city = localStorage.getItem('masjidCity');
+        if(lat && lon) {
+            getPrayerTimes(lat, lon, true);
+            const locTxt = document.getElementById('locationText');
+            if(locTxt) locTxt.innerHTML = `📍 ${city || 'Lokasi Tersimpan'}`;
+        }
+    }
+
+    function getPrayerTimes(lat, lon, isGps) {
+        if(!lat || !lon) { lat = -6.2088; lon = 106.8456; }
+        const date = Math.floor(Date.now() / 1000);
+        const url = `https://api.aladhan.com/v1/timings/${date}?latitude=${lat}&longitude=${lon}&method=11`;
+        const pList = document.getElementById('prayerList');
+        if(pList) pList.innerHTML = '<div style="padding:10px;">Loading...</div>';
+        fetch(url).then(r => r.json()).then(data => { renderPrayerWidget(data.data.timings); }).catch(e => { if(pList) pList.innerText = "Gagal memuat jadwal."; });
+    }
+
+    function renderPrayerWidget(timings) {
+        const offset = parseInt(localStorage.getItem('prayerOffset') || "0");
+        const keys = { Fajr:'Subuh', Dhuhr:'Dzuhur', Asr:'Ashar', Maghrib:'Maghrib', Isha:'Isya' };
+        const now = new Date(); 
+        const curMin = now.getHours() * 60 + now.getMinutes();
+        let html = ''; 
+        let nextFound = false;
+        let correctedTimings = {};
+
+        for (const [key, label] of Object.entries(keys)) {
+            let timeStr = timings[key]; 
+            if(offset !== 0) {
+                let [h, m] = timeStr.split(':').map(Number);
+                let dateObj = new Date();
+                dateObj.setHours(h);
+                dateObj.setMinutes(m + offset);
+                let newH = String(dateObj.getHours()).padStart(2, '0');
+                let newM = String(dateObj.getMinutes()).padStart(2, '0');
+                timeStr = `${newH}:${newM}`;
+            }
+            correctedTimings[key] = timeStr;
+            const [h, m] = timeStr.split(':').map(Number); 
+            const prayerMin = h * 60 + m;
+            let highlight = ''; 
+            if (!nextFound && prayerMin > curMin) { highlight = 'wp-active'; nextFound = true; }
+            html += `<div class="wp-item ${highlight}"><span>${label}</span><span>${timeStr}</span></div>`;
+        }
+        todayTimings = correctedTimings; 
+        const pList = document.getElementById('prayerList');
+        if(pList) pList.innerHTML = html;
+        updateMarquee();
+    }
+
+    function refreshLocation() {
+        localStorage.removeItem('masjidLat'); localStorage.removeItem('masjidLon'); localStorage.removeItem('masjidCity');
+        showLocationPopup();
+    }
+    function showLocationPopup() {
+        Swal.fire({
+            title: '<span style="color:var(--primary)">Lokasi Masjid</span>',
+            html: `<div style="display:grid; gap:10px; margin-top:15px;"><button id="btnGPS" class="btn btn-primary" style="justify-content:center; padding:12px;">GPS Otomatis</button><button id="btnManual" class="btn btn-outline" style="justify-content:center; padding:12px;">Cari Kota</button></div>`,
+            showConfirmButton: false, didOpen: () => {
+                document.getElementById('btnGPS').addEventListener('click', () => { Swal.close(); detectGPS(); });
+                document.getElementById('btnManual').addEventListener('click', () => { Swal.close(); inputManualCity(); });
+            }
+        });
+    }
+    function detectGPS() {
+        Swal.fire({ title: 'Mendeteksi...', didOpen: () => { Swal.showLoading(); } });
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const { latitude, longitude } = pos.coords;
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=10`)
+                .then(r => r.json()).then(data => {
+                    const city = data.address.city || data.address.town || "Lokasi Saya";
+                    saveLocationData(latitude, longitude, city); Swal.close();
+                });
+            }, (err) => { Swal.close(); Swal.fire('Gagal GPS', 'Gunakan pencarian manual.', 'error'); });
+        }
+    }
+    function inputManualCity() {
+        Swal.fire({
+            title: 'Cari Kota', input: 'text', showCancelButton: true, confirmButtonText: 'Cari', showLoaderOnConfirm: true,
+            preConfirm: (city) => { return fetch(`https://nominatim.openstreetmap.org/search?city=${city}&country=Indonesia&format=json&limit=1`).then(r => r.json()).then(data => { if(data.length === 0) throw new Error("Kota tidak ditemukan"); return data; }).catch(error => { Swal.showValidationMessage(`Gagal: ${error}`) }) }
+        }).then((result) => { if (result.isConfirmed && result.value && result.value.length > 0) { const data = result.value[0]; saveLocationData(data.lat, data.lon, data.display_name.split(',')[0]); Swal.fire('Berhasil', '', 'success'); } })
+    }
+    function saveLocationData(lat, lon, city) {
+        localStorage.setItem('masjidLat', lat); localStorage.setItem('masjidLon', lon); localStorage.setItem('masjidCity', city);
+        getPrayerTimes(lat, lon, true);
+        const locTxt = document.getElementById('locationText');
+        const dAddr = document.getElementById('displayMosqueAddress');
+        if(locTxt) locTxt.innerHTML = `📍 ${city}`;
+        if(dAddr) dAddr.innerText = city;
+    }
+
+    function navigate(pageId) {
+        document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+        const target = document.getElementById('page-' + pageId);
+        if(target) target.classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        if(event && event.currentTarget) event.currentTarget.classList.add('active');
+        toggleMenu();
+        window.scrollTo(0,0);
+    }
+    function toggleMenu() {
+        const sb = document.getElementById('sidebar');
+        const sbo = document.querySelector('.sidebar-overlay');
+        if(sb) sb.classList.toggle('active');
+        if(sbo) sbo.classList.toggle('active');
+    }
+    function toggleTheme() {
+        const body = document.body; const current = body.getAttribute('data-theme'); const newTheme = current === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', newTheme); localStorage.setItem('theme', newTheme);
+        const tBtn = document.getElementById('themeBtn');
+        if(tBtn) tBtn.innerHTML = newTheme === 'dark' ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+    }
+    async function changePassword() {
+        const { value: formValues } = await Swal.fire({
+            title: 'Ganti Password', html: '<input id="sw-pass-old" class="swal2-input" placeholder="Password Lama" type="password">' + '<input id="sw-pass-new" class="swal2-input" placeholder="Password Baru" type="password">',
+            focusConfirm: false, preConfirm: () => { return [document.getElementById('sw-pass-old').value, document.getElementById('sw-pass-new').value] }
+        });
+        if (formValues) {
+            if(formValues[0] === getPass()) { localStorage.setItem('appPass', formValues[1]); Swal.fire('Sukses', 'Silakan login ulang', 'success').then(() => toggleAuth()); } else { Swal.fire('Error', 'Password lama salah', 'error'); }
+        }
+    }
+    function clearData() {
+        Swal.fire({ title: 'RESET TOTAL?', text: "Semua data akan hilang!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus Semua!' }).then((result) => { if (result.isConfirmed) { localStorage.clear(); location.reload(); } });
+    }
+    function backupData() {
+        const backup = { jadwal: localStorage.getItem('jadwalMasjid'), keuangan: localStorage.getItem('keuanganMasjid'), config: { name: localStorage.getItem('mosqueName'), addr: localStorage.getItem('mosqueAddr'), pass: localStorage.getItem('appPass') } };
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backup));
+        const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", "backup_masjid_" + new Date().toISOString().slice(0,10) + ".json");
+        document.body.appendChild(dl); dl.click(); dl.remove();
+    }
+    function restoreData(input) {
+        const file = input.files[0]; if(!file) return; const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data.jadwal) localStorage.setItem('jadwalMasjid', data.jadwal); if(data.keuangan) localStorage.setItem('keuanganMasjid', data.keuangan);
+                if(data.config) { if(data.config.name) localStorage.setItem('mosqueName', data.config.name); if(data.config.addr) localStorage.setItem('mosqueAddr', data.config.addr); if(data.config.pass) localStorage.setItem('appPass', data.config.pass); }
+                if(localStorage.getItem('isAdmin') === 'true') saveToCloud(); Swal.fire('Berhasil', 'Data dipulihkan', 'success').then(() => location.reload());
+            } catch(err) { Swal.fire('Gagal', 'File backup tidak valid', 'error'); }
+        }; reader.readAsText(file);
+    }
+
+    function reqNotification() {
+        if (typeof Android !== 'undefined') {
+            Swal.fire({ title: 'Mode Android', text: 'Notifikasi aktif via HP', icon: 'success', timer: 2000, showConfirmButton: false });
+            updateNotifBtn(); return;
+        }
+        if (!("Notification" in window)) { Swal.fire('Error', 'Browser tidak mendukung notifikasi', 'error'); return; }
+        if (Notification.permission === "granted") { Swal.fire('Info', 'Izin notifikasi sudah aktif.', 'info'); updateNotifBtn(); }
+        else { Notification.requestPermission().then((permission) => { if (permission === "granted") { new Notification("Smart DKM", { body: "Notifikasi Aktif!" }); updateNotifBtn(); } else { Swal.fire('Ditolak', 'Izin ditolak.', 'warning'); } }); }
+    }
+
+    function updateNotifBtn() {
+        const btnSettings = document.getElementById('btnNotif'); const btnNav = document.getElementById('navNotifBtn');
+        const isAndroid = (typeof Android !== 'undefined'); const isWebGranted = ("Notification" in window && Notification.permission === "granted");
+        if (isAndroid || isWebGranted) {
+            if(btnSettings) { btnSettings.innerHTML = 'On'; btnSettings.classList.replace('btn-outline', 'btn-primary'); btnSettings.classList.add('bg-green-soft'); }
+            if(btnNav) { btnNav.innerHTML = '<i class="fas fa-bell"></i>'; btnNav.classList.replace('btn-outline', 'btn-primary'); }
+        }
+    }
+
+    function triggerNotification(title, body) {
+        if (typeof Android !== 'undefined' && Android.showNotif) { Android.showNotif(title, body); playBeep(); return; }
+        if ("Notification" in window && Notification.permission === "granted") { new Notification(title, { body: body, icon: "https://cdn-icons-png.flaticon.com/512/5066/5066584.png", requireInteraction: true }); playBeep(); }
+    }
+
+    function playBeep() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+            osc.connect(gain); gain.connect(ctx.destination); osc.type = "sine"; osc.frequency.value = 440; osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 1.5); osc.stop(ctx.currentTime + 1.5);
+        } catch(e) { console.log("Audio blocked"); }
+    }
+
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then((persistent) => {
+            console.log(persistent ? "Storage Permanen" : "Storage Sementara");
+        });
+    }
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Fail:', err));
+        });
+    }
+</script>
+
+</body>
+</html>
